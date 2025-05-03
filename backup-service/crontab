@@ -1,0 +1,3 @@
+
+# Cron job para ejecutar el respaldo a las 18:00 todos los días
+0 23 00 * * /backup/backup_all_databases.sh && /backup/upload_to_drive.sh

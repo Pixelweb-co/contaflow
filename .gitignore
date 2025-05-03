@@ -1,0 +1,24 @@
+﻿/frontend/node_modules
+
+# Ignore files in the backend folder
+/backend/.idea/
+/backend/.classpath
+/backend/.project
+/backend/.settings/
+/backend/src/main/resources/application.properties
+/backend/src/main/resources/application.yml
+/backend/src/main/java/com/app/starter1/config/
+
+
+/frontend/.env.local
+
+
+/backend/*.iml
+/backend/*.iws
+
+# Maven build directory
+/backend/target/
+
+# User-specific files
+./backend/DS_Store
+./bakend/Thumbs.db

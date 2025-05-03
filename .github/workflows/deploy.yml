@@ -1,0 +1,57 @@
+name: Deploy Ubuntu Server Project
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Add SSH private key to agent
+        uses: webfactory/ssh-agent@v0.5.3
+        with:
+          ssh-private-key: ${{ secrets.SSHKEY }}
+
+      - name: Add GitHub to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploy to Server
+        run: |
+          ssh -o StrictHostKeyChecking=no -p 5434 server@equibiomedic.co << 'EOF'
+            mkdir -p ~/.ssh
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            chmod 644 ~/.ssh/known_hosts
+            cd /media/backup/server/GM2/ || exit 1
+            git pull
+
+            echo '${{ secrets.SUDO_PASSWORD }}' | sudo -S docker rm -f $(docker ps -aq)
+            echo '${{ secrets.SUDO_PASSWORD }}' | sudo -S docker ps -a --filter "name=gm2_app" \
+              --filter "name=gm2_backend-spring_1" \
+              --filter "name=gm2_notification-service_1" -q | xargs -r sudo docker rm -f
+
+            echo '${{ secrets.SUDO_PASSWORD }}' | sudo -S docker images | grep -E "gm2_gm2|gm2_backend-spring|gm2_notification-service" | awk '{print \$3}' | xargs -r sudo docker rmi -f
+
+            echo '${{ secrets.SUDO_PASSWORD }}' | sudo -S docker-compose up -d --build
+          EOF
+
+      - name: Send notification email
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: mail.tornillosprotor.com
+          server_port: 465
+          username: pruebas@tornillosprotor.com
+          password: Elian2020#
+          subject: "Deploy GM2"
+          to: egbmaster2007@gmail.com
+          from: pruebas@tornillosprotor.com
+          body: "¡Se ha desplegado la actualización en GM2 correctamente!"
+          secure: true
